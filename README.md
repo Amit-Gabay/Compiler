@@ -1,5 +1,6 @@
 # L compiler
 L programming language java-based compiler, as part of a project in compilation course at Tel-Aviv University.
+L is an object-oriented programming language (OOP), which is a simplified version of java.
 
 ### Usage
 In order to create (compile🤯) the compiler, use `make compile`;
