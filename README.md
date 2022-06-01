@@ -11,7 +11,7 @@ In order to create (compile🤯) the compiler, use `make compile`;
 To create and execute the compiled MIPS assembly code, use `make everything`.
 After creating the compiler, you can compile L source code files using:
 ```
-COMPILER <source-code-path> <output-MIPS-path>
+$ COMPILER <source-code-path> <output-MIPS-path>
 ```
 
 
