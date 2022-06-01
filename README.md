@@ -3,7 +3,7 @@ L programming language java-based compiler, as part of a project in compilation 
 L is an object-oriented programming language (OOP), which is a simplified version of java.
 
 As part of the compilation process, the L code being translated into an Intermediate Representation code (IR code),
-which eventually being translated into MIPS assembly.
+which eventually being translated into MIPS assembly 👨‍💻.
 
 
 ### Usage
