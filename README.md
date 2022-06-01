@@ -5,6 +5,8 @@ L is an object-oriented programming language (OOP), which is a simplified versio
 As part of the compilation process, the L code being translated into an Intermediate Representation code (IR code),
 which eventually being translated into MIPS assembly.
 
+The compiler is powered by JFlex & CUP.
+
 
 ### Usage
 In order to create (compile🤯) the compiler, use `make compile`;
