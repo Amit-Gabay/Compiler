@@ -1,5 +1,5 @@
 # L compiler
-L programming language java-based compiler, as part of a project in compilation course at Tel-Aviv University.
+L programming language java-based compiler, as part of a project in compilation course at Tel-Aviv University 🎓.
 L is an object-oriented programming language (OOP), which is a simplified version of java.
 
 As part of the compilation process, the L code being translated into an Intermediate Representation code (IR code),
