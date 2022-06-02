@@ -1,0 +1,226 @@
+/*************/
+/* IMPORT(S) */
+/*************/
+import java_cup.runtime.*;
+import AST.*;
+import javafx.util.Pair;
+
+parser code 
+{:
+	public Lexer lexer;
+	public int error_code;
+
+	public Parser(Lexer lexer)
+	{
+		super(lexer);
+		this.lexer = lexer;
+		this.error_code = 0;
+	}
+	public void report_error(String message, Object info)
+	{
+		error_code = 1; /* Syntax error */
+		System.out.print("ERROR >> ");		
+		System.out.print("[");
+		System.out.print(lexer.getLine());
+		System.out.print(":");
+		System.out.print(lexer.getTokenStartPosition());
+		System.out.print("] ");	
+		throw new java.lang.Error("syntax error!");
+	}
+:}
+
+/************************/
+/* CUSTOMIZE CUP PARSER */
+/************************/
+scan with
+{:
+	Symbol s;
+	try
+	{
+		s = lexer.next_token();
+	}
+	catch (Error e)
+	{
+		this.error_code = 2; /* Lexical error */
+		throw new java.lang.Error("lexical error!");
+	}
+	/* System.out.print(s.sym); */
+	System.out.print("[");
+	System.out.print(lexer.getLine());
+	System.out.print(":");
+	System.out.print(lexer.getTokenStartPosition());
+	System.out.print("] ");
+	System.out.print(TokenNames.terminalNames[s.sym]);
+	if (s.value != null)
+	{
+		System.out.print("( ");
+		System.out.print(s.value);
+		System.out.print(" )");
+	}
+	System.out.print("\n");
+	return s; 
+:};
+
+/*************/
+/* TERMINALS */
+/*************/
+terminal int IF;
+terminal int EQ;
+terminal int LT;
+terminal int GT;
+terminal int DOT;
+terminal int NIL;
+terminal int NEW;
+terminal int PLUS;
+terminal int COMMA;
+terminal int MINUS;
+terminal int TIMES;
+terminal int WHILE;
+terminal int DIVIDE;
+terminal int LPAREN;
+terminal int RPAREN;
+terminal int LBRACK;
+terminal int RBRACK;
+terminal int LBRACE;
+terminal int RBRACE;
+terminal int SEMICOLON;
+terminal int ASSIGN;
+terminal int CLASS;
+terminal int ARRAY;
+terminal int RETURN;
+terminal int EXTENDS;
+terminal int TYPE_INT;
+terminal int TYPE_VOID;
+terminal int TYPE_STRING;
+
+/*************/
+/* TERMINALS */
+/*************/
+terminal Pair<String, Integer> STRING;
+terminal Pair<Integer, Integer> INT;
+terminal Pair<String, Integer> ID;
+
+/*****************/
+/* NON TERMINALS */
+/*****************/
+non terminal AST_PROGRAM Program;
+non terminal AST_DEC dec;
+non terminal AST_TYPE type;
+non terminal AST_TYPEID typeID;
+non terminal AST_ARRAYTYPEDEF arrayTypedef;
+non terminal AST_VARDEC varDec;
+non terminal AST_FUNCDEC funcDec;
+non terminal AST_CLASSDEC classDec;
+non terminal AST_EXP exp;
+non terminal AST_VAR var;
+non terminal AST_STMT stmt;
+non terminal AST_NEWEXP newExp;
+non terminal AST_CFIELD cField;
+non terminal AST_LIST<AST_CFIELD> cFieldList;
+non terminal AST_LIST<AST_STMT> stmtList;
+non terminal AST_LIST<AST_TYPEID> typeIDList;
+non terminal AST_LIST<AST_EXP> expList;
+non terminal AST_LIST<AST_DEC> decList;
+
+/***********************/
+/* OPERATOR PRECEDENCE */
+/***********************/
+precedence nonassoc ASSIGN;
+precedence left EQ;
+precedence left LT, GT;
+precedence left PLUS, MINUS;
+precedence left TIMES, DIVIDE;
+precedence nonassoc LBRACK;
+precedence nonassoc LPAREN;
+precedence left DOT;
+
+/***********************/
+/* START WITH: Program */
+/***********************/
+start with Program;
+
+/********************/
+/* DERIVATION RULES */
+/********************/
+
+Program ::= decList:dl				{: RESULT = new AST_PROGRAM(dl,dl.line); :};
+
+decList ::= dec:d decList:dl			{: RESULT = new AST_LIST<AST_DEC>(d,dl,d.line); :}
+	|   dec:d				{: RESULT = new AST_LIST<AST_DEC>(d,null,d.line); :};
+
+dec	::= varDec:v				{: RESULT = new AST_DEC_VARDEC(v,v.line); :}
+	|   funcDec:f				{: RESULT = new AST_DEC_FUNCDEC(f,f.line); :}
+	|   classDec:c				{: RESULT = new AST_DEC_CLASSDEC(c,c.line); :}
+	|   arrayTypedef:a			{: RESULT = new AST_DEC_ARRAYTYPEDEF(a,a.line); :};
+
+type 	::= TYPE_INT:line			{: RESULT = new AST_TYPE(0,line); :}
+	|   TYPE_STRING:line         		{: RESULT = new AST_TYPE(1,line); :}
+	|   TYPE_VOID:line           		{: RESULT = new AST_TYPE(2,line); :}
+	|   ID:pair                		{: RESULT = new AST_TYPE(pair.getKey(),pair.getValue()); :};
+
+arrayTypedef ::= ARRAY ID:pair EQ type:t LBRACK RBRACK SEMICOLON  	{: RESULT = new AST_ARRAYTYPEDEF(pair.getKey(),t,pair.getValue()); :};
+
+varDec ::= type:t ID:pair SEMICOLON 				{: RESULT = new AST_VARDEC(t,pair.getKey(),null,null,pair.getValue()); :}
+    	|  type:t ID:pair ASSIGN exp:e SEMICOLON 			{: RESULT = new AST_VARDEC(t,pair.getKey(),e,null, pair.getValue()); :}
+    	|  type:t ID:pair ASSIGN newExp:n SEMICOLON 		{: RESULT = new AST_VARDEC(t,pair.getKey(),null,n, pair.getValue()); :};
+     
+funcDec ::= type:t ID:pair LPAREN RPAREN LBRACE stmtList:sl RBRACE 		{: RESULT = new AST_FUNCDEC(t,pair.getKey(),null,sl,pair.getValue()); :}
+    |       type:t ID:pair LPAREN typeIDList:ti RPAREN LBRACE stmtList:sl RBRACE {: RESULT = new AST_FUNCDEC(t,pair.getKey(),ti,sl,pair.getValue()); :};
+
+stmtList ::= stmt:s stmtList:sp 			{: RESULT = new AST_LIST<AST_STMT>(s,sp,s.line); :}
+    |        stmt:s 					{: RESULT = new AST_LIST<AST_STMT>(s,null,s.line); :};
+
+typeID ::= type:t ID:pair				{: RESULT = new AST_TYPEID(t,pair.getKey(),pair.getValue()); :};
+
+typeIDList ::= typeID:ti COMMA typeIDList:til 		{: RESULT = new AST_LIST<AST_TYPEID>(ti,til,ti.line); :}
+    |	typeID:ti					{: RESULT = new AST_LIST<AST_TYPEID>(ti,null,ti.line); :};
+    
+expList ::= exp:e COMMA expList:el			{: RESULT = new AST_LIST<AST_EXP>(e,el,e.line); :}
+    |	exp:e 						{: RESULT = new AST_LIST<AST_EXP>(e,null,e.line); :};
+
+classDec ::= CLASS ID:pair LBRACE cFieldList:cl RBRACE 			{: RESULT = new AST_CLASSDEC(pair.getKey(),null,cl,pair.getValue()); :}
+    |   CLASS ID:pair1 EXTENDS ID:pair2 LBRACE cFieldList:cl RBRACE 	{: RESULT = new AST_CLASSDEC(pair1.getKey(),pair2.getKey(),cl,pair1.getValue()); :};
+
+cFieldList ::= cField:c cFieldList:cl 			{: RESULT = new AST_LIST<AST_CFIELD>(c,cl,c.line); :}
+    |   cField:c 					{: RESULT = new AST_LIST<AST_CFIELD>(c,null,c.line); :};
+
+exp ::= var:v 						{: RESULT = new AST_EXP_VAR(v,v.line); :}
+    |   LPAREN exp:e RPAREN 				{: RESULT = new AST_EXP_PAREN(e,e.line); :}
+    |   exp:e1 PLUS exp:e2 				{: RESULT = new AST_EXP_BINOP(e1,e2,0,e1.line); :}
+    |   exp:e1 MINUS exp:e2 				{: RESULT = new AST_EXP_BINOP(e1,e2,1,e1.line); :}
+    |   exp:e1 TIMES exp:e2 				{: RESULT = new AST_EXP_BINOP(e1,e2,2,e1.line); :}
+    |   exp:e1 DIVIDE exp:e2 				{: RESULT = new AST_EXP_BINOP(e1,e2,3,e1.line); :}
+    |   exp:e1 LT exp:e2 				{: RESULT = new AST_EXP_BINOP(e1,e2,4,e1.line); :}
+    |   exp:e1 GT exp:e2 				{: RESULT = new AST_EXP_BINOP(e1,e2,5,e1.line); :}
+    |   exp:e1 EQ exp:e2 				{: RESULT = new AST_EXP_BINOP(e1,e2,6,e1.line); :}
+    |   var:v DOT ID:pair LPAREN expList:el RPAREN 	{: RESULT = new AST_EXP_FUNC(v,pair.getKey(),el,pair.getValue()); :}
+    |   var:v DOT ID:pair LPAREN RPAREN 		{: RESULT = new AST_EXP_FUNC(v,pair.getKey(),null,pair.getValue()); :}
+    |   ID:pair LPAREN expList:el RPAREN 		{: RESULT = new AST_EXP_FUNC(null,pair.getKey(),el,pair.getValue()); :}
+    |   ID:pair LPAREN RPAREN 				{: RESULT = new AST_EXP_FUNC(null,pair.getKey(),null,pair.getValue()); :}
+    |   NIL:line					{: RESULT = new AST_EXP_NIL(line); :}
+    |   STRING:pair					{: RESULT = new AST_EXP_STRING(pair.getKey(),pair.getValue()); :}
+    |   INT:pair					{: RESULT = new AST_EXP_INT(pair.getKey(), pair.getValue()); :}
+    |   MINUS INT:pair					{: RESULT = new AST_EXP_INT(-1*(pair.getKey()), pair.getValue()); :};
+
+var ::= ID:pair						{: RESULT = new AST_VAR_SIMPLE(pair.getKey(),pair.getValue()); :}
+    |   var:v DOT ID:pair				{: RESULT = new AST_VAR_FIELD(v,pair.getKey(),pair.getValue()); :}
+    |   var:v LBRACK exp:e RBRACK			{: RESULT = new AST_VAR_SUBSCRIPT(v,e,v.line); :};
+
+stmt ::= varDec:v						{: RESULT = new AST_STMT_VARDEC(v,v.line); :}
+    |   var:v ASSIGN exp:e SEMICOLON				{: RESULT = new AST_STMT_ASSIGN(v,e,v.line); :}
+    |   var:v ASSIGN newExp:n SEMICOLON				{: RESULT = new AST_STMT_ASSIGN_NEW(v,n,v.line); :}
+    |   RETURN:line SEMICOLON					{: RESULT = new AST_STMT_RETURN(null,line); :}
+    |   RETURN exp:e SEMICOLON					{: RESULT = new AST_STMT_RETURN(e,e.line); :}
+    |   IF LPAREN exp:e RPAREN LBRACE stmtList:sl RBRACE	{: RESULT = new AST_STMT_IF(e,sl,e.line); :}
+    |   WHILE LPAREN exp:e RPAREN LBRACE stmtList:sl RBRACE	{: RESULT = new AST_STMT_WHILE(e,sl,e.line); :}
+    |   var:v DOT ID:pair LPAREN expList:el RPAREN SEMICOLON	{: RESULT = new AST_STMT_FUNC(v,pair.getKey(),el,pair.getValue()); :}
+    |   var:v DOT ID:pair LPAREN RPAREN SEMICOLON		{: RESULT = new AST_STMT_FUNC(v,pair.getKey(),null,pair.getValue()); :}
+    |   ID:pair LPAREN expList:el RPAREN SEMICOLON		{: RESULT = new AST_STMT_FUNC(null,pair.getKey(),el,pair.getValue()); :}
+    |   ID:pair LPAREN RPAREN SEMICOLON				{: RESULT = new AST_STMT_FUNC(null,pair.getKey(),null,pair.getValue()); :};
+
+newExp ::= NEW type:t 					{: RESULT = new AST_NEWEXP(t,null,t.line); :}
+    |   NEW type:t LBRACK exp:e RBRACK			{: RESULT = new AST_NEWEXP(t,e,t.line);    :};
+
+cField ::= varDec:v 		{: RESULT = new AST_CFIELD_VARDEC(v,v.line);  :}
+    |   funcDec:f		{: RESULT = new AST_CFIELD_FUNCDEC(f,f.line); :};
+

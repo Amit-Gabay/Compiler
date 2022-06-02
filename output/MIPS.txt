@@ -1,0 +1,114 @@
+.data
+string_access_violation: .asciiz "Access Violation"
+string_illegal_div_by_0: .asciiz "Division By Zero"
+string_invalid_ptr_dref: .asciiz "Invalid Pointer Dereference"
+.text
+	j main_end
+.globl main
+main:
+	subu $sp, $sp, 4
+	sw $ra, 0($sp)
+	subu $sp, $sp, 4
+	sw $fp, 0($sp)
+	move $fp, $sp
+	subu $sp, $sp, 4
+	sw $t0, 0($sp)
+	subu $sp, $sp, 4
+	sw $t1, 0($sp)
+	subu $sp, $sp, 4
+	sw $t2, 0($sp)
+	subu $sp, $sp, 4
+	sw $t3, 0($sp)
+	subu $sp, $sp, 4
+	sw $t4, 0($sp)
+	subu $sp, $sp, 4
+	sw $t5, 0($sp)
+	subu $sp, $sp, 4
+	sw $t6, 0($sp)
+	subu $sp, $sp, 4
+	sw $t7, 0($sp)
+	subu $sp, $sp, 4
+	sw $t8, 0($sp)
+	subu $sp, $sp, 4
+	sw $t9, 0($sp)
+	subu $sp, $sp, 4
+.data
+Label_0_str: .asciiz "aaaa"
+.text
+	la $t1, Label_0_str
+.data
+Label_1_str: .asciiz "aaa"
+.text
+	la $t0, Label_1_str
+	move $v0, $zero
+	move $s0, $t1
+Label_2_strlen_loop_start:
+	lb $s1, 0($s0)
+	beq $s1, $zero, Label_3_strlen_loop_end
+	addu $v0, $v0, 1
+	addu $s0, $s0, 1
+	j Label_2_strlen_loop_start
+Label_3_strlen_loop_end:
+	move $s7, $v0
+	move $a0, $s7
+	move $v0, $zero
+	move $s0, $t0
+Label_4_strlen_loop_start:
+	lb $s1, 0($s0)
+	beq $s1, $zero, Label_5_strlen_loop_end
+	addu $v0, $v0, 1
+	addu $s0, $s0, 1
+	j Label_4_strlen_loop_start
+Label_5_strlen_loop_end:
+	move $s5, $v0
+	add $a0, $a0, $s5
+	addu $a0, $a0, 1
+	li $v0, 9
+	syscall
+	move $s0, $v0
+	move $t0, $v0
+	move $a0, $s0
+	move $s1, $t1
+Label_6_strcpy_loop_start:
+	lb $s2, 0($s1)
+	beq $s2, $zero, Label_7_strcpy_loop_end
+	sb $s2, 0($a0)
+	addu $a0, $a0, 1
+	addu $s1, $s1, 1
+	j Label_6_strcpy_loop_start
+Label_7_strcpy_loop_end:
+	move $s1, $t0
+Label_8_strcpy_loop_start:
+	lb $s2, 0($s1)
+	beq $s2, $zero, Label_9_strcpy_loop_end
+	sb $s2, 0($a0)
+	addu $a0, $a0, 1
+	addu $s1, $s1, 1
+	j Label_8_strcpy_loop_start
+Label_9_strcpy_loop_end:
+	sb $zero, 0($a0)
+	sw $t0, -44($fp)
+	lw $t0, -44($fp)
+	move $a0, $t0
+	li $v0, 4
+	syscall
+main_epilogue:
+	move $sp, $fp
+	lw $t0, -4($sp)
+	lw $t1, -8($sp)
+	lw $t2, -12($sp)
+	lw $t3, -16($sp)
+	lw $t4, -20($sp)
+	lw $t5, -24($sp)
+	lw $t6, -28($sp)
+	lw $t7, -32($sp)
+	lw $t8, -36($sp)
+	lw $t9, -40($sp)
+	lw $fp, 0($sp)
+	addu $sp, $sp, 4
+	lw $ra, 0($sp)
+	addu $sp, $sp, 4
+	jr $ra
+main_end:
+	li $v0, 10
+	syscall
